@@ -60,20 +60,44 @@ export async function createCarro(data, token) {
 }
 
 export async function getRentas(token) {
-  const res = await fetch(`${API_URL}/api/rentas`, {
-    headers: { 'Authorization': `Bearer ${token}` }
-  });
-  return res.json();
+  try {
+    const res = await fetch(`${API_URL}/api/rentas`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    
+    const result = await res.json();
+    
+    if (!res.ok) {
+      throw new Error(result.message || `Error ${res.status}: ${res.statusText}`);
+    }
+    
+    return result;
+  } catch (error) {
+    console.error('Error en getRentas:', error);
+    throw error;
+  }
 }
 
 export async function createRenta(data, token) {
-  const res = await fetch(`${API_URL}/api/rentas`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    },
-    body: JSON.stringify(data)
-  });
-  return res.json();
+  try {
+    const res = await fetch(`${API_URL}/api/rentas`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(data)
+    });
+    
+    const result = await res.json();
+    
+    if (!res.ok) {
+      throw new Error(result.message || `Error ${res.status}: ${res.statusText}`);
+    }
+    
+    return result;
+  } catch (error) {
+    console.error('Error en createRenta:', error);
+    throw error;
+  }
 }

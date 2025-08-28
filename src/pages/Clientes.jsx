@@ -209,7 +209,7 @@ export default function Clientes({ token }) {
                   <div className="d-flex justify-content-between align-items-center">
                     <small className="text-muted text-truncate flex-grow-1 me-2">
                       <i className="bi bi-calendar3 me-1"></i>
-                      ID: {c._id.slice(-6)}
+                      ID: {c._id ? c._id.slice(-6) : 'Sin ID'}
                     </small>
                     <div className="btn-group btn-group-sm">
                       <button className="btn btn-outline-primary btn-sm" title="Ver detalles">

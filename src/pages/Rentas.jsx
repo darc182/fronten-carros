@@ -9,10 +9,18 @@ export default function Rentas({ token, userId }) {
 
   useEffect(() => {
     if (token) {
-      getRentas(token).then(data => {
-        setRentas(data);
-        setLoading(false);
-      });
+      getRentas(token)
+        .then(data => {
+          // Filtrar rentas válidas que tengan _id
+          const rentasValidas = Array.isArray(data) ? data.filter(r => r && r._id) : [];
+          setRentas(rentasValidas);
+          setLoading(false);
+        })
+        .catch(error => {
+          console.error('Error al cargar rentas:', error);
+          setRentas([]);
+          setLoading(false);
+        });
     }
   }, [token]);
 
@@ -26,10 +34,21 @@ export default function Rentas({ token, userId }) {
 
   const handleSubmit = async e => {
     e.preventDefault();
-    const res = await createRenta(form, token);
-    setRentas([...rentas, res]);
-    setForm({ clienteId: userId || '', carroId: '', fechaInicio: '', fechaFin: '', costo: '' });
-    setShowForm(false);
+    try {
+      const res = await createRenta(form, token);
+      // Verificar que la respuesta tenga un _id válido antes de añadirla
+      if (res && res._id) {
+        setRentas([...rentas, res]);
+        setForm({ clienteId: userId || '', carroId: '', fechaInicio: '', fechaFin: '', costo: '' });
+        setShowForm(false);
+      } else {
+        console.error('Error en la respuesta del servidor:', res);
+        alert('Error al crear la renta. Por favor, verifica los datos e intenta nuevamente.');
+      }
+    } catch (error) {
+      console.error('Error al crear renta:', error);
+      alert('Error al crear la renta. Por favor, verifica los datos e intenta nuevamente.');
+    }
   };
 
   const formatDate = (dateString) => {
@@ -187,7 +206,7 @@ export default function Rentas({ token, userId }) {
                   <div className="d-flex justify-content-between align-items-center">
                     <h6 className="mb-0 text-truncate flex-grow-1 me-2">
                       <i className="bi bi-calendar-check me-2"></i>
-                      Renta #{r._id.slice(-6)}
+                      Renta #{r._id ? r._id.slice(-6) : 'Sin ID'}
                     </h6>
                     <span className="badge bg-light text-dark flex-shrink-0">
                       <small>${r.costo}</small>
@@ -198,12 +217,20 @@ export default function Rentas({ token, userId }) {
                 <div className="card-body">
                   <div className="mb-2">
                     <i className="bi bi-person text-muted me-2"></i>
-                    <strong>Cliente:</strong> {typeof r.clienteId === 'object' ? r.clienteId._id?.slice(-6) || 'Sin ID' : r.clienteId.slice(-6)}
+                    <strong>Cliente:</strong> {
+                      typeof r.clienteId === 'object' && r.clienteId 
+                        ? (r.clienteId._id ? r.clienteId._id.slice(-6) : 'Sin ID')
+                        : (r.clienteId ? r.clienteId.slice(-6) : 'Sin ID')
+                    }
                   </div>
                   
                   <div className="mb-2">
                     <i className="bi bi-car-front text-muted me-2"></i>
-                    <strong>Vehículo:</strong> {typeof r.carroId === 'object' ? r.carroId._id?.slice(-6) || 'Sin ID' : r.carroId.slice(-6)}
+                    <strong>Vehículo:</strong> {
+                      typeof r.carroId === 'object' && r.carroId 
+                        ? (r.carroId._id ? r.carroId._id.slice(-6) : 'Sin ID')
+                        : (r.carroId ? r.carroId.slice(-6) : 'Sin ID')
+                    }
                   </div>
                   
                   <hr />
