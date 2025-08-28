@@ -40,6 +40,28 @@ export async function createCliente(data, token) {
   return res.json();
 }
 
+export async function updateCliente(id, data, token) {
+  const res = await fetch(`${API_URL}/api/clientes/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify(data)
+  });
+  return res.json();
+}
+
+export async function deleteCliente(id, token) {
+  const res = await fetch(`${API_URL}/api/clientes/${id}`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+  return res.json();
+}
+
 export async function getCarros(token) {
   const res = await fetch(`${API_URL}/api/carros`, {
     headers: { 'Authorization': `Bearer ${token}` }
@@ -55,6 +77,28 @@ export async function createCarro(data, token) {
       'Authorization': `Bearer ${token}`
     },
     body: JSON.stringify(data)
+  });
+  return res.json();
+}
+
+export async function updateCarro(id, data, token) {
+  const res = await fetch(`${API_URL}/api/carros/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify(data)
+  });
+  return res.json();
+}
+
+export async function deleteCarro(id, token) {
+  const res = await fetch(`${API_URL}/api/carros/${id}`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
   });
   return res.json();
 }
@@ -100,4 +144,26 @@ export async function createRenta(data, token) {
     console.error('Error en createRenta:', error);
     throw error;
   }
+}
+
+export async function updateRenta(id, data, token) {
+  const res = await fetch(`${API_URL}/api/rentas/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify(data)
+  });
+  return res.json();
+}
+
+export async function deleteRenta(id, token) {
+  const res = await fetch(`${API_URL}/api/rentas/${id}`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+  return res.json();
 }

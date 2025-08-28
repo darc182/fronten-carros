@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
-import { getCarros, createCarro } from '../services/api';
+import { getCarros, createCarro, updateCarro, deleteCarro } from '../services/api';
 
 export default function Carros({ token }) {
   const [carros, setCarros] = useState([]);
   const [form, setForm] = useState({ marca: '', modelo: '', año: '', matricula: '', disponible: true });
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [editId, setEditId] = useState(null);
+  const [editForm, setEditForm] = useState({ marca: '', modelo: '', año: '', matricula: '', disponible: true });
 
   useEffect(() => {
     if (token) {
@@ -20,12 +22,38 @@ export default function Carros({ token }) {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  const handleEditChange = e => {
+    setEditForm({ ...editForm, [e.target.name]: e.target.value });
+  };
+
   const handleSubmit = async e => {
     e.preventDefault();
     const res = await createCarro(form, token);
     setCarros([...carros, res]);
     setForm({ marca: '', modelo: '', año: '', matricula: '', disponible: true });
     setShowForm(false);
+  };
+
+  const handleEdit = (carro) => {
+    setEditId(carro._id);
+    setEditForm({
+      marca: carro.marca || '',
+      modelo: carro.modelo || '',
+      año: carro.año || '',
+      matricula: carro.matricula || '',
+      disponible: carro.disponible !== undefined ? carro.disponible : true
+    });
+  };
+
+  const handleUpdate = async (id) => {
+    const res = await updateCarro(id, editForm, token);
+    setCarros(carros.map(c => c._id === id ? res : c));
+    setEditId(null);
+  };
+
+  const handleDelete = async (id) => {
+    await deleteCarro(id, token);
+    setCarros(carros.filter(c => c._id !== id));
   };
 
   if (loading) {
@@ -180,43 +208,59 @@ export default function Carros({ token }) {
             <div key={c._id} className="col-12 col-sm-6 col-lg-4 col-xl-3 mb-3">
               <div className="card h-100 shadow-sm">
                 <div className="card-body">
-                  <div className="d-flex justify-content-between align-items-start mb-3">
-                    <div className="d-flex align-items-center flex-grow-1 min-width-0">
-                      <div className={`bg-${c.disponible ? 'success' : 'danger'} rounded-circle p-2 me-3 flex-shrink-0`}>
-                        <i className="bi bi-car-front-fill text-white"></i>
+                  {editId === c._id ? (
+                    <form onSubmit={e => { e.preventDefault(); handleUpdate(c._id); }}>
+                      <input name="marca" value={editForm.marca} onChange={handleEditChange} className="form-control mb-1" placeholder="Marca" />
+                      <input name="modelo" value={editForm.modelo} onChange={handleEditChange} className="form-control mb-1" placeholder="Modelo" />
+                      <input name="año" type="number" value={editForm.año} onChange={handleEditChange} className="form-control mb-1" placeholder="Año" />
+                      <input name="matricula" value={editForm.matricula} onChange={handleEditChange} className="form-control mb-1" placeholder="Matrícula" />
+                      <div className="form-check mb-2">
+                        <input name="disponible" type="checkbox" className="form-check-input" id={`editDisponible${c._id}`} checked={editForm.disponible} onChange={e => setEditForm({ ...editForm, disponible: e.target.checked })} />
+                        <label className="form-check-label" htmlFor={`editDisponible${c._id}`}>Disponible para renta</label>
                       </div>
-                      <div className="min-width-0 flex-grow-1">
-                        <h6 className="card-title mb-0 text-truncate">{c.marca} {c.modelo}</h6>
-                        <small className="text-muted">Año {c.año}</small>
+                      <div className="d-flex gap-2 mt-2">
+                        <button type="submit" className="btn btn-success btn-sm">Guardar</button>
+                        <button type="button" className="btn btn-secondary btn-sm" onClick={() => setEditId(null)}>Cancelar</button>
                       </div>
-                    </div>
-                    <span className={`badge bg-${c.disponible ? 'success' : 'danger'} flex-shrink-0`}>
-                      <small>{c.disponible ? 'Disponible' : 'Ocupado'}</small>
-                    </span>
-                  </div>
-                  
-                  <div className="mb-2">
-                    <i className="bi bi-credit-card text-muted me-2"></i>
-                    <strong>Matrícula:</strong> {c.matricula}
-                  </div>
-                  
-                  <div className="mb-2">
-                    <i className="bi bi-calendar3 text-muted me-2"></i>
-                    <strong>Modelo:</strong> {c.año}
-                  </div>
+                    </form>
+                  ) : (
+                    <>
+                      <div className="d-flex justify-content-between align-items-start mb-3">
+                        <div className="d-flex align-items-center flex-grow-1 min-width-0">
+                          <div className={`bg-${c.disponible ? 'success' : 'danger'} rounded-circle p-2 me-3 flex-shrink-0`}>
+                            <i className="bi bi-car-front-fill text-white"></i>
+                          </div>
+                          <div className="min-width-0 flex-grow-1">
+                            <h6 className="card-title mb-0 text-truncate">{c.marca} {c.modelo}</h6>
+                            <small className="text-muted">Año {c.año}</small>
+                          </div>
+                        </div>
+                        <span className={`badge bg-${c.disponible ? 'success' : 'danger'} flex-shrink-0`}>
+                          <small>{c.disponible ? 'Disponible' : 'Ocupado'}</small>
+                        </span>
+                      </div>
+                      <div className="mb-2">
+                        <i className="bi bi-credit-card text-muted me-2"></i>
+                        <strong>Matrícula:</strong> {c.matricula}
+                      </div>
+                      <div className="mb-2">
+                        <i className="bi bi-calendar3 text-muted me-2"></i>
+                        <strong>Modelo:</strong> {c.año}
+                      </div>
+                    </>
+                  )}
                 </div>
-                
                 <div className="card-footer bg-light d-flex justify-content-between align-items-center">
                   <small className="text-muted text-truncate flex-grow-1 me-2">
                     <i className="bi bi-tag me-1"></i>
                     ID: {c._id ? c._id.slice(-6) : 'Sin ID'}
                   </small>
                   <div className="btn-group btn-group-sm">
-                    <button className="btn btn-outline-primary btn-sm" title="Ver detalles">
-                      <i className="bi bi-eye"></i>
-                    </button>
-                    <button className="btn btn-outline-secondary btn-sm" title="Editar">
+                    <button className="btn btn-outline-primary btn-sm" title="Editar" onClick={() => handleEdit(c)}>
                       <i className="bi bi-pencil"></i>
+                    </button>
+                    <button className="btn btn-outline-danger btn-sm" title="Eliminar" onClick={() => handleDelete(c._id)}>
+                      <i className="bi bi-trash"></i>
                     </button>
                   </div>
                 </div>

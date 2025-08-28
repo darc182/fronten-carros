@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
-import { getClientes, createCliente } from '../services/api';
+import { getClientes, createCliente, updateCliente, deleteCliente } from '../services/api';
 
 export default function Clientes({ token }) {
   const [clientes, setClientes] = useState([]);
   const [form, setForm] = useState({ nombre: '', apellido: '', email: '', licenciaConducir: '', telefono: '' });
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [editId, setEditId] = useState(null);
+  const [editForm, setEditForm] = useState({ nombre: '', apellido: '', email: '', licenciaConducir: '', telefono: '' });
 
   useEffect(() => {
     if (token) {
@@ -20,12 +22,38 @@ export default function Clientes({ token }) {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  const handleEditChange = e => {
+    setEditForm({ ...editForm, [e.target.name]: e.target.value });
+  };
+
   const handleSubmit = async e => {
     e.preventDefault();
     const res = await createCliente(form, token);
     setClientes([...clientes, res]);
     setForm({ nombre: '', apellido: '', email: '', licenciaConducir: '', telefono: '' });
     setShowForm(false);
+  };
+
+  const handleEdit = (cliente) => {
+    setEditId(cliente._id);
+    setEditForm({
+      nombre: cliente.nombre || '',
+      apellido: cliente.apellido || '',
+      email: cliente.email || '',
+      licenciaConducir: cliente.licenciaConducir || '',
+      telefono: cliente.telefono || ''
+    });
+  };
+
+  const handleUpdate = async (id) => {
+    const res = await updateCliente(id, editForm, token);
+    setClientes(clientes.map(c => c._id === id ? res : c));
+    setEditId(null);
+  };
+
+  const handleDelete = async (id) => {
+    await deleteCliente(id, token);
+    setClientes(clientes.filter(c => c._id !== id));
   };
 
   if (loading) {
@@ -185,23 +213,39 @@ export default function Clientes({ token }) {
                     </div>
                   </div>
                   
-                  <div className="mb-2">
-                    <i className="bi bi-envelope text-muted me-2"></i>
-                    <small className="text-truncate d-inline-block" style={{maxWidth: '180px'}}>{c.email}</small>
-                  </div>
-                  
-                  {c.telefono && (
-                    <div className="mb-2">
-                      <i className="bi bi-telephone text-muted me-2"></i>
-                      <small>{c.telefono}</small>
-                    </div>
-                  )}
-                  
-                  {c.licenciaConducir && (
-                    <div className="mb-2">
-                      <i className="bi bi-card-text text-muted me-2"></i>
-                      <small className="text-truncate d-inline-block" style={{maxWidth: '180px'}}>Lic: {c.licenciaConducir}</small>
-                    </div>
+                  {editId === c._id ? (
+                    <form onSubmit={e => { e.preventDefault(); handleUpdate(c._id); }}>
+                      <input name="nombre" value={editForm.nombre} onChange={handleEditChange} className="form-control mb-1" placeholder="Nombre" />
+                      <input name="apellido" value={editForm.apellido} onChange={handleEditChange} className="form-control mb-1" placeholder="Apellido" />
+                      <input name="email" value={editForm.email} onChange={handleEditChange} className="form-control mb-1" placeholder="Email" />
+                      <input name="telefono" value={editForm.telefono} onChange={handleEditChange} className="form-control mb-1" placeholder="Teléfono" />
+                      <input name="licenciaConducir" value={editForm.licenciaConducir} onChange={handleEditChange} className="form-control mb-1" placeholder="Licencia" />
+                      <div className="d-flex gap-2 mt-2">
+                        <button type="submit" className="btn btn-success btn-sm">Guardar</button>
+                        <button type="button" className="btn btn-secondary btn-sm" onClick={() => setEditId(null)}>Cancelar</button>
+                      </div>
+                    </form>
+                  ) : (
+                    <>
+                      <div className="mb-2">
+                        <i className="bi bi-envelope text-muted me-2"></i>
+                        <small className="text-truncate d-inline-block" style={{maxWidth: '180px'}}>{c.email}</small>
+                      </div>
+                      
+                      {c.telefono && (
+                        <div className="mb-2">
+                          <i className="bi bi-telephone text-muted me-2"></i>
+                          <small>{c.telefono}</small>
+                        </div>
+                      )}
+                      
+                      {c.licenciaConducir && (
+                        <div className="mb-2">
+                          <i className="bi bi-card-text text-muted me-2"></i>
+                          <small className="text-truncate d-inline-block" style={{maxWidth: '180px'}}>Lic: {c.licenciaConducir}</small>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
                 
@@ -212,8 +256,11 @@ export default function Clientes({ token }) {
                       ID: {c._id ? c._id.slice(-6) : 'Sin ID'}
                     </small>
                     <div className="btn-group btn-group-sm">
-                      <button className="btn btn-outline-primary btn-sm" title="Ver detalles">
-                        <i className="bi bi-eye"></i>
+                      <button className="btn btn-outline-primary btn-sm" title="Editar" onClick={() => handleEdit(c)}>
+                        <i className="bi bi-pencil"></i>
+                      </button>
+                      <button className="btn btn-outline-danger btn-sm" title="Eliminar" onClick={() => handleDelete(c._id)}>
+                        <i className="bi bi-trash"></i>
                       </button>
                     </div>
                   </div>
